@@ -9,13 +9,28 @@ using AsmResolver.PE.DotNet.Metadata.Tables.Rows;
 using AsmResolver.PE.File.Headers;
 using MethodDefinition = AsmResolver.DotNet.MethodDefinition;
 using ModuleDefinition = AsmResolver.DotNet.ModuleDefinition;
+using Reloaded.Assembler;
+using AsmResolver;
+using AsmResolver.PE.DotNet.Builder;
+using AsmResolver.PE.File;
+using System.Runtime.CompilerServices;
 
 namespace UnmanagedString;
 
-public static class EntryPoint
+public unsafe static class EntryPoint
 {
+    public static byte[] trampoline;
+    public static List<DataSegment> AllSegs = new(4);
+
+    static EntryPoint()
+	{
+		using var asm = new Assembler();
+        trampoline = asm.Assemble("use64\nlea rax, [stringKlass]\nret\nstringKlass:\ndq 0");
+	}
+
     public static void Main(string[] args)
     {
+        args = new[] { "D:\\WorkRn\\U\\src\\Test\\bin\\Debug\\net6.0\\Test.dll" };
         if (args.Length != 1)
         {
             Logger.Error("Usage: UnmanagedString.exe <path to assembly>");
@@ -33,20 +48,39 @@ public static class EntryPoint
 
         Logger.Information("Starting...");
 
-        module.Attributes &= ~DotNetDirectoryFlags.ILOnly;
+        module.IsILOnly = false;
         var isx86 = module.MachineType == MachineType.I386;
 
         if (isx86)
         {
-            module.PEKind = OptionalHeaderMagic.Pe32;
+            module.PEKind = OptionalHeaderMagic.PE32;
             module.MachineType = MachineType.I386;
             module.Attributes |= DotNetDirectoryFlags.Bit32Required;
         }
         else
         {
-            module.PEKind = OptionalHeaderMagic.Pe32Plus;
+            module.PEKind = OptionalHeaderMagic.PE32Plus;
             module.MachineType = MachineType.Amd64;
         }
+        var fix = new MethodDefinition("Fix", MethodAttributes.Public | MethodAttributes.Static, MethodSignature.CreateStatic(module.CorLibTypeFactory.Void, module.CorLibTypeFactory.IntPtr));
+        module.GetOrCreateModuleType().Methods.Add(fix);
+        var fb = new CilMethodBody(fix);
+		fix.CilMethodBody = fb;
+        fb.Instructions.Add(CilOpCodes.Ldarg_0);
+        fb.Instructions.Add(CilOpCodes.Ldind_I);
+        fb.Instructions.Add(CilOpCodes.Ldtoken, module.CorLibTypeFactory.String.ToTypeDefOrRef());
+        fb.Instructions.Add(CilOpCodes.Stind_I);
+        fb.Instructions.Add(CilOpCodes.Ret);
+
+		var proxy = new MethodDefinition("AsStr", MethodAttributes.Public | MethodAttributes.Static, MethodSignature.CreateStatic(module.CorLibTypeFactory.String, module.CorLibTypeFactory.IntPtr));
+		module.GetOrCreateModuleType().Methods.Add(proxy);
+		var pb = new CilMethodBody(proxy);
+		proxy.CilMethodBody = pb;
+		pb.Instructions.Add(CilOpCodes.Ldarg_0);
+		pb.Instructions.Add(CilOpCodes.Ldind_I);
+		pb.Instructions.Add(CilOpCodes.Ret);
+
+		List<MethodDefinition> nativestrings = new List<MethodDefinition>();
 
         foreach (var type in module.GetAllTypes())
         foreach (var method in type.Methods)
@@ -61,6 +95,8 @@ public static class EntryPoint
                     CreateNewNativeMethodWithString(
                         instruction.Operand as string ?? throw new InvalidCilInstructionException(), module, isx86);
 
+                nativestrings.Add(newNativeMethod);
+
                 if (newNativeMethod == null)
                     continue;
 
@@ -68,39 +104,43 @@ public static class EntryPoint
                 instruction.Operand = newNativeMethod;
 
                 method.CilMethodBody.Instructions.Insert(++index,
-                    new CilInstruction(CilOpCodes.Newobj,
-                        importer.ImportMethod(
-                            typeof(string).GetConstructor(new[] { typeof(sbyte*) })!)));
+                    new CilInstruction(CilOpCodes.Call, proxy));
             }
 
-        module.Write(args[0] + "_strings.exe");
+        var cctor = module.GetOrCreateModuleConstructor().CilMethodBody.Instructions;
+        foreach(var i in nativestrings)
+        {
+            cctor.Insert(0, new CilInstruction(CilOpCodes.Call, i));
+            cctor.Insert(1, new CilInstruction(CilOpCodes.Call, fix));
+        }
+
+        var peimage = module.ToPEImage();
+        var pegen = new ManagedPEFileBuilder();
+        var pefile = pegen.CreateFile(peimage);
+        var strings = new PESection(".strs", SectionFlags.MemoryWrite | SectionFlags.MemoryRead);
+        pefile.Sections.Add(strings);
+        var container = new SegmentBuilder();
+        strings.Contents = container;
+        foreach(var d in AllSegs)
+        {
+            container.Add(d);
+        }
+        pefile.Write(args[0]);
         Logger.Success("Done!");
     }
 
-    private static MethodDefinition? CreateNewNativeMethodWithString(string toInject, ModuleDefinition originalModule,
+    private static MethodDefinition CreateNewNativeMethodWithString(string toInject, ModuleDefinition originalModule,
         bool isX86)
     {
         if (originalModule == null)
             throw new ArgumentNullException(nameof(originalModule));
-
-        // Register new encoding provider. 
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        var w1252Encoding = Encoding.GetEncoding(1252); // Windows-1252
-
-        // Check if the string is in Windows-1252 range.
-        if (!CanBeEncodedInWindows1252(toInject))
-        {
-            Logger.Warning(
-                $"Skipping string \"{toInject}\" because it contains characters outside of Windows-1252 range.");
-            return null;
-        }
 
         var factory = originalModule.CorLibTypeFactory;
 
         // Create new method with public and static visibility.
         var methodName = Guid.NewGuid().ToString();
         var method = new MethodDefinition(methodName, MethodAttributes.Public | MethodAttributes.Static,
-            MethodSignature.CreateStatic(factory.SByte.MakePointerType()));
+            MethodSignature.CreateStatic(factory.IntPtr));
 
         // Set ImplAttributes to NativeBody.
         method.ImplAttributes |= MethodImplAttributes.Native | MethodImplAttributes.Unmanaged |
@@ -111,57 +151,33 @@ public static class EntryPoint
 
         originalModule.GetOrCreateModuleType().Methods.Add(method);
 
-        // Get the string bytes.
-        var stringBytes = w1252Encoding.GetBytes(toInject);
+        var strbytes = Encoding.Unicode.GetBytes(toInject + '\0');
+        var klass = new byte[strbytes.Length+8+4];
+        strbytes.CopyTo(klass, 8+4); // wtf, it cant copy last char +_+
+        fixed(byte* p = &klass[8])
+        {
+            *(int*)p = toInject.Length;
+        }
 
         // Create a new NativeMethodBody with x64 or x32 byte code.
         NativeMethodBody body;
 
         if (isX86)
-            body = new NativeMethodBody(method)
-            {
-                Code = new byte[]
-                {
-                    0x55, // push ebp
-                    0x89, 0xE5, // mov ebp, esp
-                    0xE8, 0x05, 0x00, 0x00, 0x00, // call <jump1>
-                    0x83, 0xC0, 0x01, // add eax, 1
-                    // <jump2>:
-                    0x5D, // pop ebp
-                    0xC3, // ret
-                    // <jump1>:
-                    0x58, // pop eax
-                    0x83, 0xC0, 0x0B, // add eax, 0xb
-                    0xEB, 0xF8 // jmp <jump2>
-                }.Concat(stringBytes).Concat(new byte[] { 0x00 }).ToArray()
-            };
+            throw new NotImplementedException();
         else
-            body = new NativeMethodBody(method)
-            {
-                Code = new byte[]
-                {
-                    0x48, 0x8D, 0x05, 0x01, 0x00, 0x00, 0x00, // lea rax, [rip + 0x1]
-                    0xC3 // ret
-                }.Concat(stringBytes).Concat(new byte[] { 0x00 }).ToArray()
-            };
+        {
+			body = new NativeMethodBody(method)
+			{
+				Code = trampoline
+			};
+            var seg = new DataSegment(klass);
+            var symbol = new Symbol(new SegmentReference(seg));
+            body.AddressFixups.Add(new AsmResolver.PE.Code.AddressFixup((uint)(trampoline.Length-8), AsmResolver.PE.Code.AddressFixupType.Absolute64BitAddress, symbol));
+            AllSegs.Add(seg);		
+        }
 
         Logger.Success($"Created new native method with name: {methodName} for string: {toInject}");
         method.NativeMethodBody = body;
         return method;
-    }
-
-    private static bool CanBeEncodedInWindows1252(string str)
-    {
-        try
-        {
-            _ = Encoding.GetEncoding(1252, EncoderFallback.ExceptionFallback, DecoderFallback.ReplacementFallback)
-                .GetBytes(str);
-
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
     }
 }

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <IsPackable>false</IsPackable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DefineConstants>TRACECOREAPP; XUNIT_NULLABLE</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DefineConstants>TRACECOREAPP; XUNIT_NULLABLE</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
+        <PackageReference Include="xunit" Version="2.4.2" />
+        <PackageReference Include="xunit.analyzers" Version="1.1.0" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Xunit.SkippableFact" Version="1.4.13" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\AsmResolver.PE\AsmResolver.PE.csproj" />
+      <ProjectReference Include="..\AsmResolver.Tests\AsmResolver.Tests.csproj" />
+      <ProjectReference Include="..\TestBinaries\DotNet\AsmResolver.DotNet.TestCases.Fields\AsmResolver.DotNet.TestCases.Fields.csproj" />
+      <ProjectReference Include="..\TestBinaries\DotNet\AsmResolver.DotNet.TestCases.Resources\AsmResolver.DotNet.TestCases.Resources.csproj" />
+    </ItemGroup>
+
+</Project>

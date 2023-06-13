@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFrameworks>net6.0</TargetFrameworks>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
+      <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="$(SolutionDir)\src\AsmResolver.DotNet\AsmResolver.DotNet.csproj" />
+      <ProjectReference Include="$(SolutionDir)\src\AsmResolver.PE.File\AsmResolver.PE.File.csproj" />
+      <ProjectReference Include="$(SolutionDir)\src\AsmResolver.PE.Win32Resources\AsmResolver.PE.Win32Resources.csproj" />
+      <ProjectReference Include="$(SolutionDir)\src\AsmResolver.PE\AsmResolver.PE.csproj" />
+      <ProjectReference Include="$(SolutionDir)\src\AsmResolver\AsmResolver.csproj" />
+    </ItemGroup>
+
+</Project>

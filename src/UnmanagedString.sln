@@ -1,6 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnmanagedString", "UnmanagedString\UnmanagedString.csproj", "{9DFBDD82-6DF9-4B44-8F28-94F337E50A8A}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33723.286
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnmanagedString", "UnmanagedString\UnmanagedString.csproj", "{9DFBDD82-6DF9-4B44-8F28-94F337E50A8A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsmResolver.DotNet", "..\AsmResolver-feature-arbitrary-symbols-native-bodies\src\AsmResolver.DotNet\AsmResolver.DotNet.csproj", "{188DF88C-93B0-41F1-AF88-4683016A8A10}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsmResolver.PE", "..\AsmResolver-feature-arbitrary-symbols-native-bodies\src\AsmResolver.PE\AsmResolver.PE.csproj", "{32D010E0-364A-4992-A7E7-5CB434995FF3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsmResolver.PE.File", "..\AsmResolver-feature-arbitrary-symbols-native-bodies\src\AsmResolver.PE.File\AsmResolver.PE.File.csproj", "{C263A0B9-9FE3-4C41-9CD7-5F1C87253716}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AsmResolver", "..\AsmResolver-feature-arbitrary-symbols-native-bodies\src\AsmResolver\AsmResolver.csproj", "{A0159E45-E38F-4105-A9B7-5EE908571226}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{85C8845D-746D-451F-9CBD-421A05602206}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,5 +25,31 @@ Global
 		{9DFBDD82-6DF9-4B44-8F28-94F337E50A8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9DFBDD82-6DF9-4B44-8F28-94F337E50A8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9DFBDD82-6DF9-4B44-8F28-94F337E50A8A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{188DF88C-93B0-41F1-AF88-4683016A8A10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{188DF88C-93B0-41F1-AF88-4683016A8A10}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{188DF88C-93B0-41F1-AF88-4683016A8A10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{188DF88C-93B0-41F1-AF88-4683016A8A10}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32D010E0-364A-4992-A7E7-5CB434995FF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32D010E0-364A-4992-A7E7-5CB434995FF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32D010E0-364A-4992-A7E7-5CB434995FF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32D010E0-364A-4992-A7E7-5CB434995FF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C263A0B9-9FE3-4C41-9CD7-5F1C87253716}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C263A0B9-9FE3-4C41-9CD7-5F1C87253716}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C263A0B9-9FE3-4C41-9CD7-5F1C87253716}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C263A0B9-9FE3-4C41-9CD7-5F1C87253716}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0159E45-E38F-4105-A9B7-5EE908571226}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0159E45-E38F-4105-A9B7-5EE908571226}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0159E45-E38F-4105-A9B7-5EE908571226}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0159E45-E38F-4105-A9B7-5EE908571226}.Release|Any CPU.Build.0 = Release|Any CPU
+		{85C8845D-746D-451F-9CBD-421A05602206}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{85C8845D-746D-451F-9CBD-421A05602206}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{85C8845D-746D-451F-9CBD-421A05602206}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{85C8845D-746D-451F-9CBD-421A05602206}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F112C148-6691-4051-9E3F-E4123E54C986}
 	EndGlobalSection
 EndGlobal
