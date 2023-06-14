@@ -30,7 +30,7 @@ public unsafe static class EntryPoint
 
     public static void Main(string[] args)
     {
-        args = new[] { "D:\\WorkRn\\U\\src\\Test\\bin\\Debug\\net6.0\\Test.dll" };
+        //args = new[] { "D:\\WorkRn\\U\\src\\Test\\bin\\Debug\\net6.0\\Test.dll" };
         if (args.Length != 1)
         {
             Logger.Error("Usage: UnmanagedString.exe <path to assembly>");
