@@ -72,19 +72,11 @@ public unsafe static class EntryPoint
         fb.Instructions.Add(CilOpCodes.Stind_I);
         fb.Instructions.Add(CilOpCodes.Ret);
 
-		var proxy = new MethodDefinition("AsStr", MethodAttributes.Public | MethodAttributes.Static, MethodSignature.CreateStatic(module.CorLibTypeFactory.String, module.CorLibTypeFactory.IntPtr));
-		module.GetOrCreateModuleType().Methods.Add(proxy);
-		var pb = new CilMethodBody(proxy);
-		proxy.CilMethodBody = pb;
-		pb.Instructions.Add(CilOpCodes.Ldarg_0);
-		pb.Instructions.Add(CilOpCodes.Ldind_I);
-		pb.Instructions.Add(CilOpCodes.Ret);
-
 		List<MethodDefinition> nativestrings = new List<MethodDefinition>();
 
         foreach (var type in module.GetAllTypes())
         foreach (var method in type.Methods)
-            for (var index = 0; index < method.CilMethodBody!.Instructions.Count; ++index)
+            for (var index = 0; index < method.CilMethodBody?.Instructions.Count; ++index)
             {
                 var instruction = method.CilMethodBody!.Instructions[index];
 
@@ -104,7 +96,7 @@ public unsafe static class EntryPoint
                 instruction.Operand = newNativeMethod;
 
                 method.CilMethodBody.Instructions.Insert(++index,
-                    new CilInstruction(CilOpCodes.Call, proxy));
+                    new CilInstruction(CilOpCodes.Ldind_Ref));
             }
 
         var cctor = module.GetOrCreateModuleConstructor().CilMethodBody.Instructions;
